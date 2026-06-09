@@ -1,0 +1,25 @@
+{
+  "name": "@app/etl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "etl:scrutins": "tsx src/run-scrutins.ts",
+    "test": "node --import tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@app/connectors-assemblee": "workspace:*",
+    "@app/connectors-civix": "workspace:*",
+    "@app/db": "workspace:*",
+    "@app/schema": "workspace:*",
+    "adm-zip": "^0.5.16",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.6",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

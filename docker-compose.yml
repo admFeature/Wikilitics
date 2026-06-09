@@ -1,0 +1,26 @@
+# Postgres pour la phase 2 (persistance). Démarrage :
+#   docker compose up -d
+# puis (depuis la racine) :
+#   echo "DATABASE_URL=postgresql://app:app@127.0.0.1:5432/politique?schema=public" > .env
+#   pnpm --filter @app/db db:generate && pnpm --filter @app/db db:migrate
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: politique_pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: politique
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d politique"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

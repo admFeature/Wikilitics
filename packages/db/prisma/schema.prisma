@@ -1,0 +1,184 @@
+// Schéma Postgres — Phase 2.
+//
+// Principes appliqués au modèle :
+//  - chaque TABLE DE FAITS porte ses colonnes de provenance
+//    (source, source_url, collected_at, licence) ;
+//  - `source_identity` mappe une personne ↔ l'identifiant de CHAQUE source,
+//    avec un score de confiance (réconciliation d'identité) ;
+//  - HATVP : on ne stocke JAMAIS la situation patrimoniale ; la table
+//    `declaration_hatvp` porte `reutilisation_ok` (false ⇒ lien sortant seul).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Supabase : `url` = connexion POOLÉE (pgBouncer, port 6543) pour le runtime ;
+  // `directUrl` = connexion DIRECTE (port 5432) pour les migrations / db:push.
+  // En local/Docker, mettre la même valeur dans les deux.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Source {
+  CIVIX
+  POLIGRAPH
+  LEGIFRANCE
+  ASSEMBLEE
+  SENAT
+  HATVP
+  VIE_PUBLIQUE
+}
+
+enum VotePosition {
+  pour
+  contre
+  abstention
+  nonVotant
+}
+
+/// Entité unique vers laquelle convergent les données normalisées.
+model Personnalite {
+  id        String   @id @default(cuid())
+  prenom    String
+  nom       String
+  slug      String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  identities   SourceIdentity[]
+  mandats      Mandat[]
+  votes        Vote[]
+  declarations DeclarationHatvp[]
+  discours     Discours[]
+
+  @@index([nom, prenom])
+  @@map("personnalite")
+}
+
+/// Mapping personne ↔ identifiant d'une source, avec score de confiance.
+model SourceIdentity {
+  id             String   @id @default(cuid())
+  personnalite   Personnalite @relation(fields: [personnaliteId], references: [id], onDelete: Cascade)
+  personnaliteId String
+  source         Source
+  sourceUid      String
+  confidence     Float    @default(1.0)
+  createdAt      DateTime @default(now())
+
+  @@unique([source, sourceUid])
+  @@index([personnaliteId])
+  @@map("source_identity")
+}
+
+model Mandat {
+  id             String   @id @default(cuid())
+  personnalite   Personnalite @relation(fields: [personnaliteId], references: [id], onDelete: Cascade)
+  personnaliteId String
+  type           String
+  libelle        String
+  debut          DateTime?
+  fin            DateTime?
+
+  // Provenance
+  source     Source
+  sourceUrl  String
+  collectedAt DateTime
+  licence    String
+
+  @@index([personnaliteId])
+  @@map("mandat")
+}
+
+model Scrutin {
+  id        String   @id @default(cuid())
+  source    Source
+  sourceUid String
+  titre     String
+  date      DateTime?
+  resultat  String?
+
+  // Provenance
+  sourceUrl   String
+  collectedAt DateTime
+  licence     String
+
+  votes Vote[]
+
+  @@unique([source, sourceUid])
+  @@map("scrutin")
+}
+
+model Vote {
+  id             String   @id @default(cuid())
+  personnalite   Personnalite @relation(fields: [personnaliteId], references: [id], onDelete: Cascade)
+  personnaliteId String
+  scrutin        Scrutin  @relation(fields: [scrutinId], references: [id], onDelete: Cascade)
+  scrutinId      String
+  position       VotePosition
+
+  // Provenance
+  source     Source
+  sourceUrl  String
+  collectedAt DateTime
+  licence    String
+
+  @@unique([personnaliteId, scrutinId])
+  @@index([personnaliteId])
+  @@map("vote")
+}
+
+/// HATVP intérêts/activités UNIQUEMENT. JAMAIS la situation patrimoniale.
+model DeclarationHatvp {
+  id             String   @id @default(cuid())
+  personnalite   Personnalite @relation(fields: [personnaliteId], references: [id], onDelete: Cascade)
+  personnaliteId String
+  type           String   // ex: "interets", "activites"
+  /// false ⇒ donnée non republiable (patrimoine) : on n'expose qu'un lien sortant.
+  reutilisationOk Boolean @default(false)
+  lienSortant    String?
+
+  // Provenance
+  source     Source
+  sourceUrl  String
+  collectedAt DateTime
+  licence    String
+
+  @@index([personnaliteId])
+  @@map("declaration_hatvp")
+}
+
+model Discours {
+  id             String   @id @default(cuid())
+  personnalite   Personnalite @relation(fields: [personnaliteId], references: [id], onDelete: Cascade)
+  personnaliteId String
+  titre          String
+  date           DateTime?
+  url            String
+
+  // Provenance
+  source     Source
+  sourceUrl  String
+  collectedAt DateTime
+  licence    String
+
+  @@index([personnaliteId])
+  @@map("discours")
+}
+
+/// Décisions/textes Légifrance : ANONYMISÉS → non rattachés à une personne.
+model TexteLegal {
+  id    String   @id @default(cuid())
+  titre String
+  url   String
+  date  DateTime?
+
+  // Provenance
+  source     Source
+  sourceUrl  String
+  collectedAt DateTime
+  licence    String
+
+  @@map("texte_legal")
+}
