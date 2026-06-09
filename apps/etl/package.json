@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "etl:scrutins": "tsx src/run-scrutins.ts",
+    "probe": "tsx src/probe.ts",
     "test": "node --import tsx --test src/*.test.ts",
     "typecheck": "tsc --noEmit"
   },

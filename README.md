@@ -45,10 +45,8 @@ pnpm dev          # Next.js (UI + API) sur http://localhost:3000
 │   ├── web-next/            # ★ Next.js (App Router) : UI + API (route handlers) — DÉPLOYABLE
 │   │   ├── app/{page.tsx, layout.tsx, api/…/route.ts}
 │   │   └── components/ · lib/
-│   ├── etl/                 # (P3) ETL votes nominatifs Assemblée → Postgres
-│   │   └── src/run-scrutins.ts
-│   ├── api/                 # (legacy) Fastify ; script probe
-│   └── web/                 # (legacy) React + Vite
+│   └── etl/                 # (P3) ETL Assemblée → Postgres + script probe (diagnostic CIVIX)
+│       └── src/{run-scrutins.ts, probe.ts}
 ├── packages/
 │   ├── schema/              # types de domaine + schémas Zod partagés
 │   ├── core/                # orchestration : ConnectorRegistry (partagé Next/Fastify)
@@ -220,10 +218,6 @@ pnpm start    # serveur de production
 > Note serverless : l'index votes en mémoire se recharge à chaque *cold start*
 > (téléchargement du zip AN, mis en cache `/tmp`). Pour un coût constant en prod,
 > bascule les votes sur Supabase (ETL) ; l'API lit alors la base en priorité.
-
-### Legacy (avant migration Next)
-`apps/web` (Vite) + `apps/api` (Fastify) sont conservés comme alternative locale
-(`pnpm dev:legacy`) ; ils ne sont plus la cible de déploiement.
 
 ## Prochaines phases
 
