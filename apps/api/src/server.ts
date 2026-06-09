@@ -14,7 +14,7 @@ import "./load-env.js";
 import Fastify from "fastify";
 import { z } from "zod";
 import { UpstreamError } from "@app/connectors-base";
-import { ConnectorRegistry } from "./registry.js";
+import { ConnectorRegistry } from "@app/core";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const HOST = process.env.HOST ?? "127.0.0.1";

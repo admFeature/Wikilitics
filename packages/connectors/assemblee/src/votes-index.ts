@@ -8,7 +8,6 @@
  *
  * Le zip est mis en cache disque (tmp) pour accélérer les redémarrages.
  */
-import AdmZip from "adm-zip";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -79,6 +78,9 @@ export class AssembleeVotesIndex {
   }
 
   private async build(): Promise<void> {
+    // Import paresseux d'adm-zip : ne charge la lib QUE lors de la construction
+    // de l'index (et pas au chargement du module → routes /about, /search OK).
+    const { default: AdmZip } = await import("adm-zip");
     const zip = new AdmZip(await this.loadZipBuffer());
     const entries = zip
       .getEntries()

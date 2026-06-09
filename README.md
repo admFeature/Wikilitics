@@ -10,7 +10,7 @@ rattaché à sa **source officielle** (`Provenance`).
 
 ```bash
 pnpm install
-pnpm dev          # backend (http://127.0.0.1:3001) + frontend (http://localhost:5173)
+pnpm dev          # Next.js (UI + API) sur http://localhost:3000
 ```
 
 - **Mode LIVE (par défaut)** : vrais députés de l'Assemblée via l'API CIVIX.
@@ -42,14 +42,16 @@ pnpm dev          # backend (http://127.0.0.1:3001) + frontend (http://localhost
 ```
 .
 ├── apps/
-│   ├── api/                 # Fastify : API interne + orchestration + script probe
-│   │   └── src/{server.ts, registry.ts, probe.ts}
+│   ├── web-next/            # ★ Next.js (App Router) : UI + API (route handlers) — DÉPLOYABLE
+│   │   ├── app/{page.tsx, layout.tsx, api/…/route.ts}
+│   │   └── components/ · lib/
 │   ├── etl/                 # (P3) ETL votes nominatifs Assemblée → Postgres
-│   │   └── src/{run-scrutins.ts, an-scrutins.ts}
-│   └── web/                 # React + Vite + TanStack Query
-│       └── src/{App.tsx, api.ts, components/…}
+│   │   └── src/run-scrutins.ts
+│   ├── api/                 # (legacy) Fastify ; script probe
+│   └── web/                 # (legacy) React + Vite
 ├── packages/
 │   ├── schema/              # types de domaine + schémas Zod partagés
+│   ├── core/                # orchestration : ConnectorRegistry (partagé Next/Fastify)
 │   ├── db/                  # (P2) Prisma : schéma Postgres + repository (optionnel)
 │   ├── reconciliation/      # (P2) matching d'identité inter-sources + score de confiance
 │   └── connectors/
@@ -192,19 +194,36 @@ ETL_MAX_SCRUTINS=800 pnpm etl:scrutins   # plus de profondeur
 - Ordre de résolution des votes dans l'API : **mémoire (AN)** → base (si ETL) →
   connecteur.
 
-## Déploiement (Vercel + Supabase)
+## Application & déploiement (Next.js sur Vercel)
 
-- **Base** : Supabase (Postgres managé). `DATABASE_URL` = connection string
-  Supabase. Pour le serverless, préférer l'URL **poolée** (pgBouncer, port 6543,
-  `?pgbouncer=true`) côté runtime, et l'URL **directe** (port 5432) pour
-  `db:push`/migrations.
-- **Frontend** : `apps/web` se construit en statique (`pnpm --filter @app/web build`)
-  → déployable tel quel sur Vercel.
-- **Backend** : `apps/api` est un serveur Fastify long-running. Sur Vercel
-  (serverless), deux options : (a) l'exposer en *serverless function* via
-  `@fastify/aws-lambda`/handler Vercel ; (b) l'héberger sur une plateforme
-  *long-running* (Render, Fly, Railway) et pointer le frontend dessus. En dev,
-  le proxy Vite `/api` masque ce choix. **À cadrer avant la mise en prod.**
+L'app déployable est **`apps/web-next`** (Next.js App Router) : elle contient
+**à la fois** l'interface (React) et l'API (route handlers `app/api/*`), qui
+réutilisent l'orchestration partagée `@app/core`. Un seul déploiement Vercel.
+
+```bash
+pnpm dev      # Next en dev (UI + API) sur http://localhost:3000
+pnpm build    # next build
+pnpm start    # serveur de production
+```
+
+### Déployer sur Vercel
+1. Importer le repo dans Vercel.
+2. **Root Directory = `apps/web-next`** (Vercel détecte Next.js et le monorepo
+   pnpm ; l'install se fait à la racine de l'espace de travail).
+3. Variables d'environnement (Project Settings → Environment Variables) :
+   - rien n'est obligatoire : **CIVIX live + votes Assemblée en mémoire** marchent
+     d'origine ;
+   - `DATABASE_URL` (+ `DIRECT_URL`) Supabase **si** tu veux la persistance. Dans
+     ce cas, ajoute une étape de build `pnpm --filter @app/db db:generate` et
+     lance l'ETL pour peupler la base.
+
+> Note serverless : l'index votes en mémoire se recharge à chaque *cold start*
+> (téléchargement du zip AN, mis en cache `/tmp`). Pour un coût constant en prod,
+> bascule les votes sur Supabase (ETL) ; l'API lit alors la base en priorité.
+
+### Legacy (avant migration Next)
+`apps/web` (Vite) + `apps/api` (Fastify) sont conservés comme alternative locale
+(`pnpm dev:legacy`) ; ils ne sont plus la cible de déploiement.
 
 ## Prochaines phases
 

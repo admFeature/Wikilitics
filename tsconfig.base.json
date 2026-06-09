@@ -2,7 +2,10 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    // DOM/DOM.Iterable : types web (fetch, Response, Headers, AbortController)
+    // de façon déterministe (fournis par TypeScript), sans dépendre de la
+    // résolution de @types/node qui diffère sur Vercel.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,

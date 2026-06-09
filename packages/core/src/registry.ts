@@ -1,5 +1,5 @@
 /**
- * Registre multi-connecteurs + orchestration (phase 2).
+ * Registre multi-connecteurs + orchestration (partagé Fastify ET Next).
  *
  * - Agrège la recherche sur TOUTES les sources (CIVIX = Assemblée,
  *   PoliGraph = Sénat/ministres), même interface `SourceConnector`.
@@ -7,24 +7,18 @@
  *   ensuite le détail et les votes vers le bon connecteur.
  * - Réconcilie les identités entre sources (score de confiance) et annote les
  *   résultats vus dans plusieurs sources.
- * - Persiste (optionnellement, si une base est configurée) les clusters
- *   d'identité et les votes récupérés.
+ * - Votes nominatifs : index Assemblée en mémoire (open data) → base (si ETL) →
+ *   connecteur.
  */
 import type { SourceConnector } from "@app/connectors-base";
-import type {
-  DeputeDetail,
-  DeputeVote,
-  SearchHit,
-  Source,
-} from "@app/schema";
+import type { DeputeDetail, DeputeVote, SearchHit, Source } from "@app/schema";
 import { createCivixConnector } from "@app/connectors-civix";
 import { createPoliGraphConnector } from "@app/connectors-poligraph";
 import { AssembleeVotesIndex } from "@app/connectors-assemblee";
 import { reconcile, type IdentityCandidate } from "@app/reconciliation";
 // IMPORTANT : @app/db (et donc @prisma/client) n'est JAMAIS importé
 // statiquement. Sans DATABASE_URL, la persistance est désactivée et Prisma
-// n'a même pas besoin d'être généré. Le chargement est paresseux (dynamic
-// import) et ne se produit que si une base est réellement configurée.
+// n'a même pas besoin d'être généré (chargement paresseux par import()).
 import type { Repository } from "@app/db";
 
 /** Sépare un prénom composé (1er mot) du nom (reste) — approximation. */
@@ -64,15 +58,12 @@ export class ConnectorRegistry {
 
   constructor() {
     const candidates = [createCivixConnector(), createPoliGraphConnector()];
-    // On ne MÉLANGE JAMAIS des sources réelles (live) avec des sources de démo
-    // (fictives) : si au moins une source est live, on ne garde que les live.
+    // On ne MÉLANGE JAMAIS des sources réelles (live) avec des sources de démo.
     this.liveMode = candidates.some((c) => c.isLive);
     const kept = this.liveMode ? candidates.filter((c) => c.isLive) : candidates;
-    this.connectors = new Map<Source, SourceConnector>(
-      kept.map((c) => [c.source, c]),
-    );
-    this.dbEnabled = typeof process.env.DATABASE_URL === "string"
-      && process.env.DATABASE_URL.trim() !== "";
+    this.connectors = new Map<Source, SourceConnector>(kept.map((c) => [c.source, c]));
+    this.dbEnabled =
+      typeof process.env.DATABASE_URL === "string" && process.env.DATABASE_URL.trim() !== "";
   }
 
   /** Préchauffe l'index des votes Assemblée (à appeler au démarrage si live). */
@@ -93,12 +84,11 @@ export class ConnectorRegistry {
     try {
       return await this.repoPromise;
     } catch {
-      // Si Prisma n'est pas généré / base injoignable : on dégrade sans casser.
-      return null;
+      return null; // Prisma non généré / base injoignable : on dégrade.
     }
   }
 
-  /** Renvoie l'objet { live, base, note } (forme About) selon les sources ACTIVES. */
+  /** Renvoie l'objet { live, base, note, persistence } selon les sources ACTIVES. */
   about() {
     const active = [...this.connectors.values()];
     const live = active.some((c) => c.isLive);
@@ -123,7 +113,6 @@ export class ConnectorRegistry {
     );
     const flat = perSource.flat();
 
-    // Réconciliation : candidats à partir des libellés.
     const candidates: IdentityCandidate[] = flat.map(({ source, hit }) => {
       const { prenom, nom } = splitLabel(hit.label);
       return {
@@ -136,25 +125,25 @@ export class ConnectorRegistry {
     });
     const clusters = reconcile(candidates);
 
-    // Persistance optionnelle des clusters (mapping + confiance).
     const repo = await this.getRepo();
     if (repo) {
       await Promise.all(
         clusters.map((c) =>
-          repo.persistIdentityCluster(
-            c.members.map((m) => ({
-              source: m.source,
-              sourceUid: m.sourceUid,
-              prenom: m.prenom,
-              nom: m.nom,
-              confidence: m.confidence,
-            })),
-          ).catch(() => null),
+          repo
+            .persistIdentityCluster(
+              c.members.map((m) => ({
+                source: m.source,
+                sourceUid: m.sourceUid,
+                prenom: m.prenom,
+                nom: m.nom,
+                confidence: m.confidence,
+              })),
+            )
+            .catch(() => null),
         ),
       );
     }
 
-    // Annoter les hits présents dans plusieurs sources.
     const multiSourceUids = new Map<string, Source[]>();
     for (const c of clusters) {
       const sources = [...new Set(c.members.map((m) => m.source))];
@@ -166,10 +155,9 @@ export class ConnectorRegistry {
     return flat.map(({ source, hit }) => {
       const prefixedUid = encodeUid(source, hit.uid);
       const otherSources = (multiSourceUids.get(hit.uid) ?? []).filter((s) => s !== source);
-      const annotation =
-        otherSources.length > 0 ? ` · aussi dans ${otherSources.join(", ")}` : "";
-      const base = hit.sublabel ?? source;
-      return { ...hit, uid: prefixedUid, sublabel: `${base}${annotation}` };
+      const annotation = otherSources.length > 0 ? ` · aussi dans ${otherSources.join(", ")}` : "";
+      const sub = hit.sublabel ?? source;
+      return { ...hit, uid: prefixedUid, sublabel: `${sub}${annotation}` };
     });
   }
 
@@ -181,21 +169,14 @@ export class ConnectorRegistry {
     if (!connector) return null;
     const detail = await connector.getDepute(decoded.uid);
     if (!detail) return null;
-    // On ré-expose l'uid préfixé pour rester cohérent côté frontend.
     return { ...detail, uid: prefixedUid };
   }
 
-  /**
-   * Votes d'une personne. Priorité aux votes NOMINATIFS persistés (ETL Assemblée,
-   * phase 3), joints par `acteurRef` (= uid CIVIX). À défaut, on interroge le
-   * connecteur (live ; vide pour CIVIX qui n'expose pas le nominatif).
-   */
+  /** Votes : mémoire (Assemblée open data) → base (si ETL) → connecteur. */
   async getVotes(prefixedUid: string, limit: number): Promise<DeputeVote[]> {
     const decoded = decodeUid(prefixedUid);
     if (!decoded) return [];
 
-    // 1) Votes nominatifs Assemblée EN MÉMOIRE (open data) — aucune base requise.
-    //    L'uid CIVIX (« PA… ») est le même acteurRef que dans l'open data AN.
     if (this.liveMode) {
       try {
         await this.assemblee.load();
@@ -206,16 +187,21 @@ export class ConnectorRegistry {
       }
     }
 
-    // 2) Votes nominatifs persistés en base (si une DB est configurée + ETL).
     const repo = await this.getRepo();
     if (repo) {
       const dbVotes = await repo.listVotesByActeurRef(decoded.uid, limit).catch(() => []);
       if (dbVotes.length > 0) return dbVotes;
     }
 
-    // 3) Repli connecteur (live ; vide pour CIVIX qui n'expose pas le nominatif).
     const connector = this.connectors.get(decoded.source);
     if (!connector) return [];
     return connector.getRecentVotesForDepute(decoded.uid, limit);
   }
+}
+
+/** Singleton paresseux — pratique en serverless (réutilisé entre invocations chaudes). */
+let singleton: ConnectorRegistry | undefined;
+export function getRegistry(): ConnectorRegistry {
+  if (!singleton) singleton = new ConnectorRegistry();
+  return singleton;
 }

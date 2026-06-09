@@ -6,5 +6,7 @@ build/
 .env.local
 .DS_Store
 .vite/
+.next/
+next-env.d.ts
 coverage/
 *.tsbuildinfo

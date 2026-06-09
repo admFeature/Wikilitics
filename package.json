@@ -8,9 +8,10 @@
   },
   "packageManager": "pnpm@10.17.1",
   "scripts": {
-    "dev": "pnpm -r --parallel --filter \"./apps/*\" dev",
-    "dev:api": "pnpm --filter @app/api dev",
-    "dev:web": "pnpm --filter @app/web dev",
+    "dev": "pnpm --filter @app/web-next dev",
+    "build": "pnpm --filter @app/web-next build",
+    "start": "pnpm --filter @app/web-next start",
+    "dev:legacy": "pnpm -r --parallel --filter \"./apps/api\" --filter \"./apps/web\" dev",
     "probe": "pnpm --filter @app/api probe",
     "etl:scrutins": "pnpm --filter @app/etl etl:scrutins",
     "test": "pnpm -r test",
