@@ -27,6 +27,8 @@ export interface HatvpInteret {
   type: string;
   /** Nom du fichier XML open data (contenu de la déclaration), si livré. */
   fichier?: string;
+  /** Photo officielle (Assemblée / Sénat), si fournie. */
+  photo?: string;
 }
 
 export function normName(prenom: string, nom: string): string {
@@ -56,6 +58,7 @@ export function parseListeCsv(text: string): HatvpInteret[] {
   const iDoc = idx("type_document");
   const iUrl = idx("url_dossier");
   const iFichier = idx("open_data");
+  const iPhoto = idx("url_photo");
   if (iPrenom < 0 || iNom < 0 || iDoc < 0 || iUrl < 0) return [];
 
   const out: HatvpInteret[] = [];
@@ -69,12 +72,14 @@ export function parseListeCsv(text: string): HatvpInteret[] {
     const nom = (c[iNom] ?? "").trim();
     if (prenom === "" && nom === "") continue;
     const fichier = iFichier >= 0 ? (c[iFichier] ?? "").trim() : "";
+    const photo = iPhoto >= 0 ? (c[iPhoto] ?? "").trim() : "";
     out.push({
       key: normName(prenom, nom),
       mandat: (c[iMandat] ?? "").trim(),
       url: urlDossier.startsWith("http") ? urlDossier : `${HATVP_BASE}${urlDossier}`,
       type,
       ...(fichier.endsWith(".xml") ? { fichier } : {}),
+      ...(photo.startsWith("http") ? { photo } : {}),
     });
   }
   return out;

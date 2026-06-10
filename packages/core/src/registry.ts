@@ -263,13 +263,17 @@ export class ConnectorRegistry {
         /* index acteurs indisponible : on renvoie le détail de base */
       }
 
-      // Lien déclaration d'INTÉRÊTS HATVP (jamais le patrimoine).
+      // Lien déclaration d'INTÉRÊTS HATVP (jamais le patrimoine) + photo officielle.
       const mandat = HATVP_MANDAT[decoded.source];
       if (mandat) {
         try {
           await this.hatvp.load();
           const url = this.hatvp.getInteretsUrl(enriched.prenom, enriched.nom, mandat);
           if (url) enriched = { ...enriched, declarationInteretsUrl: url };
+          if (!enriched.photoUrl) {
+            const photo = this.hatvp.getPhotoUrl(enriched.prenom, enriched.nom, mandat);
+            if (photo) enriched = { ...enriched, photoUrl: photo };
+          }
         } catch {
           /* index HATVP indisponible : on ignore */
         }

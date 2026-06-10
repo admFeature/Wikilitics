@@ -25,6 +25,7 @@ interface Entry {
   url: string;
   type: string;
   fichier?: string;
+  photo?: string;
 }
 
 export class HatvpInteretsIndex {
@@ -54,6 +55,15 @@ export class HatvpInteretsIndex {
   }
 
   /**
+   * Photo officielle d'une personne. Repli « toutes fonctions » par nom
+   * (utile pour un ministre ex-député/sénateur, absent de la photo gouvernement).
+   */
+  getPhotoUrl(prenom: string, nom: string, mandat: HatvpMandat): string | undefined {
+    const key = normName(prenom, nom);
+    return this.byKey.get(`${key}|${mandat}`)?.photo ?? this.byName.get(key)?.photo;
+  }
+
+  /**
    * Contenu de la déclaration d'intérêts (rubriques) + lien. Renvoie null si
    * la personne n'a pas de déclaration d'intérêts connue.
    */
@@ -79,9 +89,16 @@ export class HatvpInteretsIndex {
     const byKey = new Map<string, Entry>();
     const byName = new Map<string, Entry>();
     for (const e of parseListeCsv(text) as HatvpInteret[]) {
-      const entry: Entry = { url: e.url, type: e.type, ...(e.fichier ? { fichier: e.fichier } : {}) };
+      const entry: Entry = {
+        url: e.url,
+        type: e.type,
+        ...(e.fichier ? { fichier: e.fichier } : {}),
+        ...(e.photo ? { photo: e.photo } : {}),
+      };
       byKey.set(`${e.key}|${e.mandat}`, entry);
-      if (!byName.has(e.key)) byName.set(e.key, entry);
+      const existing = byName.get(e.key);
+      // On garde la 1re entrée, mais on privilégie celle qui a une photo.
+      if (!existing || (!existing.photo && entry.photo)) byName.set(e.key, entry);
     }
     this.byKey = byKey;
     this.byName = byName;

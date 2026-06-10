@@ -24,6 +24,7 @@ interface RawSenateur {
   nom?: string;
   prenom?: string;
   url?: string;
+  urlAvatar?: string;
   groupe?: { libelle?: string; libelleCourt?: string; code?: string } | null;
   circonscription?: { libelle?: string } | null;
   categorieProfessionnelle?: { libelle?: string } | null;
@@ -38,6 +39,7 @@ interface Senateur {
   circonscription?: string;
   profession?: string;
   url?: string;
+  photo?: string;
   haystack: string;
 }
 
@@ -86,6 +88,7 @@ export class SenatConnector implements SourceConnector {
       ...(s.groupeAbbr ? { groupeAbbr: s.groupeAbbr } : {}),
       ...(s.circonscription ? { circonscription: `${s.circonscription} (Sénat)` } : {}),
       ...(s.profession ? { profession: s.profession } : {}),
+      ...(s.photo ? { photoUrl: s.photo } : {}),
       provenance: makeProvenance("SENAT", sourceUrl, LICENCE),
     };
   }
@@ -118,6 +121,9 @@ export class SenatConnector implements SourceConnector {
         circonscription,
         profession,
         ...(typeof r.url === "string" ? { url: r.url } : {}),
+        ...(typeof r.urlAvatar === "string" && r.urlAvatar
+          ? { photo: r.urlAvatar.startsWith("http") ? r.urlAvatar : `${BASE}${r.urlAvatar}` }
+          : {}),
         haystack: normalize(`${prenom} ${nom} ${groupeAbbr ?? ""}`),
       });
     }

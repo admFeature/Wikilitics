@@ -10,7 +10,7 @@ export default function Page() {
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
-    <div className="app">
+    <div className={`app${selected ? " app--wide" : ""}`}>
       <header className="app__top">
         <span className="eyebrow">Données publiques · sourcées</span>
         <h1>Agrégateur de données politiques</h1>

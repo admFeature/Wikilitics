@@ -64,6 +64,8 @@ export type DeputeSummary = z.infer<typeof DeputeSummarySchema>;
 
 export const DeputeDetailSchema = DeputeSummarySchema.extend({
   profession: z.string().optional(),
+  /** Photo officielle (Assemblée / Sénat / HATVP), si disponible. */
+  photoUrl: z.string().url().optional(),
   /** Enrichissements open data Assemblée (AMO) — tous optionnels. */
   dateNaissance: z.string().optional(),
   lieuNaissance: z.string().optional(),

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDepute, fetchVotes, fetchDiscours, fetchInterets } from "@/lib/api";
 import { ErrorBox } from "@/components/ErrorBox";
@@ -29,6 +30,8 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
 
       {depute.data && (
         <header className="fiche__header">
+          <Avatar src={depute.data.photoUrl} prenom={depute.data.prenom} nom={depute.data.nom} />
+          <div className="fiche__id">
           <h2 className="fiche__name">{depute.data.prenom} {depute.data.nom}</h2>
           <div className="fiche__meta">
             <span className="chip">{depute.data.groupe ?? depute.data.groupeAbbr ?? "Groupe non renseigné"}</span>
@@ -51,49 +54,12 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
             )}
           </div>
           <ProvenanceLink provenance={depute.data.provenance} />
+          </div>
         </header>
       )}
 
-      {interets.data && (
-        <section className="transparence" aria-labelledby="transp-title">
-          <h3 className="section-title" id="transp-title">Déclaration d&apos;intérêts · HATVP</h3>
-
-          {interets.data.rubriques.length > 0 ? (
-            <ul className="interets">
-              {interets.data.rubriques.map((r) => (
-                <li key={r.label} className="rubrique">
-                  <p className="rubrique__label">{r.label}</p>
-                  <ul className="rubrique__items">
-                    {r.items.map((it, i) => (
-                      <li key={i} className="rubrique__item">
-                        {it.titre && <span className="ri-titre">{it.titre}</span>}
-                        {it.detail && <span className="ri-detail">{it.detail}</span>}
-                        <span className="ri-meta">
-                          {[it.periode, it.remuneration].filter(Boolean).join(" · ")}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">
-              Aucun intérêt détaillé exploitable (déclaration au format simplifié).
-            </p>
-          )}
-
-          <a className="decl-link" href={interets.data.url} target="_blank" rel="noopener noreferrer">
-            Déclaration officielle (HATVP) <span aria-hidden>↗</span>
-          </a>
-          <p className="muted decl-note">
-            Déclaration d&apos;<strong>intérêts</strong> (open data, Licence Ouverte).
-            Conformément à la loi, la situation <strong>patrimoniale</strong> n&apos;est
-            jamais republiée.
-          </p>
-        </section>
-      )}
-
+      <div className="fiche__cols">
+      <div className="fiche__col">
       <section aria-labelledby="votes-title">
         <h3 className="section-title" id="votes-title">
           Derniers votes
@@ -158,6 +124,70 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
           </ul>
         </section>
       )}
+      </div>
+
+      <div className="fiche__col">
+      {interets.data && (
+        <section className="transparence" aria-labelledby="transp-title">
+          <h3 className="section-title" id="transp-title">Déclaration d&apos;intérêts · HATVP</h3>
+
+          {interets.data.rubriques.length > 0 ? (
+            <ul className="interets">
+              {interets.data.rubriques.map((r) => (
+                <li key={r.label} className="rubrique">
+                  <p className="rubrique__label">{r.label}</p>
+                  <ul className="rubrique__items">
+                    {r.items.map((it, i) => (
+                      <li key={i} className="rubrique__item">
+                        {it.titre && <span className="ri-titre">{it.titre}</span>}
+                        {it.detail && <span className="ri-detail">{it.detail}</span>}
+                        <span className="ri-meta">
+                          {[it.periode, it.remuneration].filter(Boolean).join(" · ")}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">
+              Aucun intérêt détaillé exploitable (déclaration au format simplifié).
+            </p>
+          )}
+
+          <a className="decl-link" href={interets.data.url} target="_blank" rel="noopener noreferrer">
+            Déclaration officielle (HATVP) <span aria-hidden>↗</span>
+          </a>
+          <p className="muted decl-note">
+            Déclaration d&apos;<strong>intérêts</strong> (open data, Licence Ouverte).
+            Conformément à la loi, la situation <strong>patrimoniale</strong> n&apos;est
+            jamais republiée.
+          </p>
+        </section>
+      )}
+      </div>
+      </div>
     </article>
+  );
+}
+
+/** Photo officielle, avec repli sur les initiales si absente ou cassée. */
+function Avatar({ src, prenom, nom }: { src?: string; prenom: string; nom: string }) {
+  const [err, setErr] = useState(false);
+  const initials = `${prenom[0] ?? ""}${nom[0] ?? ""}`.toUpperCase();
+  if (!src || err) {
+    return <div className="fiche__photo fiche__photo--ph" aria-hidden>{initials}</div>;
+  }
+  // Photos externes (assemblee-nationale.fr / senat.fr) → <img> simple.
+  // eslint-disable-next-line @next/next/no-img-element
+  return (
+    <img
+      className="fiche__photo"
+      src={src}
+      alt={`${prenom} ${nom}`}
+      loading="lazy"
+      onError={() => setErr(true)}
+    />
   );
 }

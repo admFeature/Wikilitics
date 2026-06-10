@@ -116,8 +116,21 @@ button { cursor: pointer; font: inherit; color: inherit; }
   margin: 0 auto;
   padding: clamp(2rem, 6vw, 4.5rem) 1.25rem 5rem;
 }
+/* Fiche ouverte : on élargit pour répartir les sections en colonnes. */
+.app--wide { max-width: 1080px; }
+/* La barre de recherche reste à une largeur de lecture confortable. */
+.app--wide .combobox { max-width: 680px; }
 
 .app__top { margin-bottom: 1.75rem; }
+
+/* --- Mise en colonnes de la fiche ------------------------------------ */
+.fiche__cols { display: grid; gap: 1.5rem; }
+.fiche__col { display: flex; flex-direction: column; gap: 1.75rem; min-width: 0; }
+/* Le gap gère l'espacement : on neutralise les marges propres des sections. */
+.fiche__col > section { margin: 0; }
+@media (min-width: 900px) {
+  .fiche__cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+}
 
 .eyebrow {
   display: inline-flex;
@@ -285,12 +298,26 @@ h1 {
 .backlink:active { transform: scale(0.97); }
 
 .fiche__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
   padding: 1.25rem 1.35rem;
   margin-bottom: 1.5rem;
+}
+.fiche__id { flex: 1; min-width: 0; }
+.fiche__photo {
+  width: 76px; height: 76px; flex-shrink: 0;
+  border-radius: 12px; object-fit: cover; object-position: top center;
+  background: var(--panel); border: 1px solid var(--border);
+}
+.fiche__photo--ph {
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 1.4rem; color: var(--muted);
+  letter-spacing: 0.02em;
 }
 .fiche__name { margin: 0 0 0.5rem; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.015em; }
 .fiche__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.7rem; }
