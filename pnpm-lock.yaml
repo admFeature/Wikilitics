@@ -157,6 +157,13 @@ importers:
         version: 5.9.3
 
   packages/connectors/hatvp:
+    dependencies:
+      '@app/schema':
+        specifier: workspace:*
+        version: link:../../schema
+      fast-xml-parser:
+        specifier: ^4.5.0
+        version: 4.5.6
     devDependencies:
       '@types/node':
         specifier: ^22.9.0
@@ -634,6 +641,10 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  fast-xml-parser@4.5.6:
+    resolution: {integrity: sha512-Yd4vkROfJf8AuJrDIVMVmYfULKmIJszVsMv7Vo71aocsKgFxpdlpSHXSaInvyYfgw2PRuObQSW2GFpVMUjxu9A==}
+    hasBin: true
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -721,6 +732,9 @@ packages:
   streamsearch@1.1.0:
     resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
     engines: {node: '>=10.0.0'}
+
+  strnum@1.1.2:
+    resolution: {integrity: sha512-vrN+B7DBIoTTZjnPNewwhx6cBA/H+IS7rfW68n7XxC1y7uoiGQBxaKzqucGUgavX15dJgiGztLJ8vxuEzwqBdA==}
 
   styled-jsx@5.1.1:
     resolution: {integrity: sha512-pW7uC1l4mBZ8ugbiZrcIsiIvVx1UmTfw7UkC3Um2tmfUq9Bhk8IiyEIPl6F8agHgjzku6j0xQEZbfA5uSgSaCw==}
@@ -984,6 +998,10 @@ snapshots:
       '@esbuild/win32-ia32': 0.28.0
       '@esbuild/win32-x64': 0.28.0
 
+  fast-xml-parser@4.5.6:
+    dependencies:
+      strnum: 1.1.2
+
   fsevents@2.3.3:
     optional: true
 
@@ -1065,6 +1083,8 @@ snapshots:
   source-map-js@1.2.1: {}
 
   streamsearch@1.1.0: {}
+
+  strnum@1.1.2: {}
 
   styled-jsx@5.1.1(react@18.3.1):
     dependencies:

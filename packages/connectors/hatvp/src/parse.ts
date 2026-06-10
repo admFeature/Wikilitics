@@ -25,6 +25,8 @@ export interface HatvpInteret {
   url: string;
   /** type_document (di, dia, …) — toujours un type d'INTÉRÊTS. */
   type: string;
+  /** Nom du fichier XML open data (contenu de la déclaration), si livré. */
+  fichier?: string;
 }
 
 export function normName(prenom: string, nom: string): string {
@@ -53,6 +55,7 @@ export function parseListeCsv(text: string): HatvpInteret[] {
   const iMandat = idx("type_mandat");
   const iDoc = idx("type_document");
   const iUrl = idx("url_dossier");
+  const iFichier = idx("open_data");
   if (iPrenom < 0 || iNom < 0 || iDoc < 0 || iUrl < 0) return [];
 
   const out: HatvpInteret[] = [];
@@ -65,11 +68,13 @@ export function parseListeCsv(text: string): HatvpInteret[] {
     const prenom = (c[iPrenom] ?? "").trim();
     const nom = (c[iNom] ?? "").trim();
     if (prenom === "" && nom === "") continue;
+    const fichier = iFichier >= 0 ? (c[iFichier] ?? "").trim() : "";
     out.push({
       key: normName(prenom, nom),
       mandat: (c[iMandat] ?? "").trim(),
       url: urlDossier.startsWith("http") ? urlDossier : `${HATVP_BASE}${urlDossier}`,
       type,
+      ...(fichier.endsWith(".xml") ? { fichier } : {}),
     });
   }
   return out;

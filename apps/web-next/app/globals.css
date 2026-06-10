@@ -318,7 +318,21 @@ h1 {
 }
 .decl-link:hover { border-color: var(--accent-ring); }
 .decl-link:active { transform: scale(0.98); }
-.decl-note { margin: 0.5rem 0 0; font-size: 0.82rem; }
+.decl-note { margin: 0.6rem 0 0; font-size: 0.82rem; }
+.interets { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; gap: 0.9rem; }
+.rubrique__label {
+  margin: 0 0 0.4rem; font-size: 0.74rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+}
+.rubrique__items { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.rubrique__item {
+  display: flex; flex-direction: column; gap: 0.1rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.ri-titre { font-weight: 550; }
+.ri-detail { font-size: 0.9rem; }
+.ri-meta { color: var(--muted); font-size: 0.8rem; }
 
 .section-title {
   display: flex; align-items: baseline; gap: 0.5rem;

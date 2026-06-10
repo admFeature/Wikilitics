@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchDepute, fetchVotes, fetchDiscours } from "@/lib/api";
+import { fetchDepute, fetchVotes, fetchDiscours, fetchInterets } from "@/lib/api";
 import { ErrorBox } from "@/components/ErrorBox";
 import { PositionBadge } from "@/components/PositionBadge";
 import { ProvenanceLink } from "@/components/ProvenanceLink";
@@ -11,6 +11,7 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
   const depute = useQuery({ queryKey: ["depute", uid], queryFn: () => fetchDepute(uid) });
   const votes = useQuery({ queryKey: ["votes", uid], queryFn: () => fetchVotes(uid, 8) });
   const discours = useQuery({ queryKey: ["discours", uid], queryFn: () => fetchDiscours(uid, 6) });
+  const interets = useQuery({ queryKey: ["interets", uid], queryFn: () => fetchInterets(uid) });
 
   return (
     <article className="fiche">
@@ -53,20 +54,42 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
         </header>
       )}
 
-      {depute.data?.declarationInteretsUrl && (
+      {interets.data && (
         <section className="transparence" aria-labelledby="transp-title">
-          <h3 className="section-title" id="transp-title">Transparence</h3>
-          <a
-            className="decl-link"
-            href={depute.data.declarationInteretsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Déclaration d&apos;intérêts (HATVP) <span aria-hidden>↗</span>
+          <h3 className="section-title" id="transp-title">Déclaration d&apos;intérêts · HATVP</h3>
+
+          {interets.data.rubriques.length > 0 ? (
+            <ul className="interets">
+              {interets.data.rubriques.map((r) => (
+                <li key={r.label} className="rubrique">
+                  <p className="rubrique__label">{r.label}</p>
+                  <ul className="rubrique__items">
+                    {r.items.map((it, i) => (
+                      <li key={i} className="rubrique__item">
+                        {it.titre && <span className="ri-titre">{it.titre}</span>}
+                        {it.detail && <span className="ri-detail">{it.detail}</span>}
+                        <span className="ri-meta">
+                          {[it.periode, it.remuneration].filter(Boolean).join(" · ")}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">
+              Aucun intérêt détaillé exploitable (déclaration au format simplifié).
+            </p>
+          )}
+
+          <a className="decl-link" href={interets.data.url} target="_blank" rel="noopener noreferrer">
+            Déclaration officielle (HATVP) <span aria-hidden>↗</span>
           </a>
           <p className="muted decl-note">
-            Lien vers la déclaration officielle d&apos;intérêts. Conformément à la
-            loi, la situation patrimoniale n&apos;est jamais republiée.
+            Déclaration d&apos;<strong>intérêts</strong> (open data, Licence Ouverte).
+            Conformément à la loi, la situation <strong>patrimoniale</strong> n&apos;est
+            jamais republiée.
           </p>
         </section>
       )}

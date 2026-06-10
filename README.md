@@ -60,7 +60,7 @@ pnpm dev          # Next.js (UI + API) sur http://localhost:3000
 │       ├── assemblee/       # (P3) open data AN : votes nominatifs + détails acteurs (en mémoire)
 │       ├── gouvernement/    # (P3) composition du Gouvernement (ministres) — open data DILA
 │       ├── senat/           # (P3) sénateurs en exercice — open data data.senat.fr
-│       ├── hatvp/           # (P3) déclarations d'INTÉRÊTS (lien) — open data HATVP
+│       ├── hatvp/           # (P3) déclarations d'INTÉRÊTS (contenu + lien) — open data HATVP
 │       ├── legifrance/      # (P3) recherche de textes de loi — API PISTE/DILA (OAuth2)
 │       └── viepublique/     # (P3) discours publics récents — open data DILA (range request)
 ├── docker-compose.yml       # (P2) Postgres pour la persistance
@@ -207,9 +207,13 @@ ministres (Gouvernement) + sénateurs (Sénat)**.
 
 ### HATVP — déclarations d'intérêts (lien)
 
-`@app/connectors-hatvp` charge la liste open data HATVP (`liste.csv`) et ajoute
-sur chaque fiche (député / sénateur / ministre) un **lien sortant** vers sa
-**déclaration d'intérêts** officielle, rapproché par nom + mandat.
+`@app/connectors-hatvp` charge la liste open data HATVP (`liste.csv`) et, sur
+chaque fiche (député / sénateur / ministre), affiche le **CONTENU** de la
+**déclaration d'intérêts** : rubriques déclarées (activités professionnelles,
+participations à des directions, participations financières, mandats électifs,
+fonctions bénévoles, observations…) avec période et rémunération, en lisant le
+**XML individuel** de la déclaration (`/livraison/dossiers/<fichier>.xml`). Un
+lien vers la page officielle HATVP est conservé. Rapproché par nom + mandat.
 
 > 🔒 **Conformité (non négociable, testée)** : on ne retient QUE les déclarations
 > d'**intérêts/activités** (`type_document` commençant par `di`). La **situation

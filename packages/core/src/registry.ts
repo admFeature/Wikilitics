@@ -11,7 +11,14 @@
  *   connecteur.
  */
 import type { SourceConnector } from "@app/connectors-base";
-import type { DeputeDetail, DeputeVote, DiscoursItem, SearchHit, Source } from "@app/schema";
+import type {
+  DeputeDetail,
+  DeputeVote,
+  DiscoursItem,
+  InteretsDeclaration,
+  SearchHit,
+  Source,
+} from "@app/schema";
 import { createCivixConnector } from "@app/connectors-civix";
 import { createPoliGraphConnector } from "@app/connectors-poligraph";
 import { createGouvernementConnector } from "@app/connectors-gouvernement";
@@ -99,6 +106,25 @@ export class ConnectorRegistry {
       this.hatvp.load().catch(() => undefined),
       this.discours.load().catch(() => undefined),
     ]);
+  }
+
+  /** Déclaration d'INTÉRÊTS HATVP d'une personne (contenu + lien ; jamais patrimoine). */
+  async getInterets(prefixedUid: string): Promise<InteretsDeclaration | null> {
+    if (!this.liveMode) return null;
+    const decoded = decodeUid(prefixedUid);
+    if (!decoded) return null;
+    const mandat = HATVP_MANDAT[decoded.source];
+    if (!mandat) return null;
+    const connector = this.connectors.get(decoded.source);
+    if (!connector) return null;
+    const detail = await connector.getDepute(decoded.uid).catch(() => null);
+    if (!detail) return null;
+    try {
+      await this.hatvp.load();
+      return await this.hatvp.getDeclaration(detail.prenom, detail.nom, mandat);
+    } catch {
+      return null;
+    }
   }
 
   /** Derniers discours publics d'une personne (résolus par son nom). */

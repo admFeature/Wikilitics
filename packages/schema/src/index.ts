@@ -143,6 +143,32 @@ export const DiscoursItemSchema = z.object({
 });
 export type DiscoursItem = z.infer<typeof DiscoursItemSchema>;
 
+/* ------------------------------------------------------------------ */
+/* HATVP — contenu d'une déclaration d'INTÉRÊTS (jamais le patrimoine)  */
+/* ------------------------------------------------------------------ */
+
+export const InteretItemSchema = z.object({
+  titre: z.string().optional(),
+  detail: z.string().optional(),
+  periode: z.string().optional(),
+  remuneration: z.string().optional(),
+});
+export type InteretItem = z.infer<typeof InteretItemSchema>;
+
+export const InteretRubriqueSchema = z.object({
+  label: z.string(),
+  neant: z.boolean(),
+  items: z.array(InteretItemSchema),
+});
+export type InteretRubrique = z.infer<typeof InteretRubriqueSchema>;
+
+export const InteretsDeclarationSchema = z.object({
+  url: z.string().url(),
+  type: z.string().optional(),
+  rubriques: z.array(InteretRubriqueSchema),
+});
+export type InteretsDeclaration = z.infer<typeof InteretsDeclarationSchema>;
+
 /** Réponses listes — pratiques pour la validation côté frontend. */
 export const SearchHitListSchema = z.array(SearchHitSchema);
 export const DiscoursItemListSchema = z.array(DiscoursItemSchema);
