@@ -11,13 +11,14 @@
  *   connecteur.
  */
 import type { SourceConnector } from "@app/connectors-base";
-import type { DeputeDetail, DeputeVote, SearchHit, Source } from "@app/schema";
+import type { DeputeDetail, DeputeVote, DiscoursItem, SearchHit, Source } from "@app/schema";
 import { createCivixConnector } from "@app/connectors-civix";
 import { createPoliGraphConnector } from "@app/connectors-poligraph";
 import { createGouvernementConnector } from "@app/connectors-gouvernement";
 import { createSenatConnector } from "@app/connectors-senat";
 import { AssembleeVotesIndex, AssembleeActeursIndex } from "@app/connectors-assemblee";
 import { HatvpInteretsIndex, type HatvpMandat } from "@app/connectors-hatvp";
+import { ViePubliqueDiscoursIndex } from "@app/connectors-viepublique";
 import { reconcile, type IdentityCandidate } from "@app/reconciliation";
 // IMPORTANT : @app/db (et donc @prisma/client) n'est JAMAIS importé
 // statiquement. Sans DATABASE_URL, la persistance est désactivée et Prisma
@@ -69,6 +70,8 @@ export class ConnectorRegistry {
   private readonly acteurs = new AssembleeActeursIndex();
   /** Déclarations d'INTÉRÊTS HATVP (lien sortant ; jamais le patrimoine). */
   private readonly hatvp = new HatvpInteretsIndex();
+  /** Discours publics récents (vie-publique.fr), indexés par intervenant. */
+  private readonly discours = new ViePubliqueDiscoursIndex();
 
   constructor() {
     const baseCandidates = [createCivixConnector(), createPoliGraphConnector()];
@@ -94,7 +97,25 @@ export class ConnectorRegistry {
       this.assemblee.load().catch(() => undefined),
       this.acteurs.load().catch(() => undefined),
       this.hatvp.load().catch(() => undefined),
+      this.discours.load().catch(() => undefined),
     ]);
+  }
+
+  /** Derniers discours publics d'une personne (résolus par son nom). */
+  async getDiscours(prefixedUid: string, limit: number): Promise<DiscoursItem[]> {
+    if (!this.liveMode) return [];
+    const decoded = decodeUid(prefixedUid);
+    if (!decoded) return [];
+    const connector = this.connectors.get(decoded.source);
+    if (!connector) return [];
+    const detail = await connector.getDepute(decoded.uid).catch(() => null);
+    if (!detail) return [];
+    try {
+      await this.discours.load();
+      return this.discours.getDiscours(detail.prenom, detail.nom, limit);
+    } catch {
+      return [];
+    }
   }
 
   get persistenceEnabled(): boolean {

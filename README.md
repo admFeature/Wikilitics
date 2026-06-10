@@ -61,7 +61,8 @@ pnpm dev          # Next.js (UI + API) sur http://localhost:3000
 │       ├── gouvernement/    # (P3) composition du Gouvernement (ministres) — open data DILA
 │       ├── senat/           # (P3) sénateurs en exercice — open data data.senat.fr
 │       ├── hatvp/           # (P3) déclarations d'INTÉRÊTS (lien) — open data HATVP
-│       └── legifrance/      # (P3) recherche de textes de loi — API PISTE/DILA (OAuth2)
+│       ├── legifrance/      # (P3) recherche de textes de loi — API PISTE/DILA (OAuth2)
+│       └── viepublique/     # (P3) discours publics récents — open data DILA (range request)
 ├── docker-compose.yml       # (P2) Postgres pour la persistance
 └── prompt-projet-vscode.md
 ```
@@ -233,6 +234,15 @@ Prérequis : une **application PISTE abonnée à l'API Légifrance en Production
 Sans identifiants, la recherche renvoie un état désactivé (503) sans casser
 le reste de l'app. Décisions de justice = anonymisées → non rattachées à une
 personne (on n'expose qu'une recherche de **textes**, pas de personnes).
+
+### Discours — vie-publique.fr (open data DILA)
+
+`@app/connectors-viepublique` ajoute une section **« Discours récents »** sur les
+fiches (surtout ministres / Premier ministre / président). Le jeu complet fait
+**~241 Mo** (trié du plus récent au plus ancien) : on n'en télécharge qu'une
+**tranche récente** (~6 Mo via *range request*, réglable par `VP_DISCOURS_BYTES`),
+on indexe par **nom d'intervenant**, et on affiche les derniers discours avec
+lien vers `vie-publique.fr`. Aucun téléchargement massif, serverless-friendly.
 
 ### À quoi sert Supabase alors ? (OPTIONNEL)
 

@@ -20,6 +20,7 @@ const nextConfig = {
     "@app/connectors-senat",
     "@app/connectors-hatvp",
     "@app/connectors-legifrance",
+    "@app/connectors-viepublique",
     "@app/connectors-assemblee",
     "@app/reconciliation",
     "@app/db",

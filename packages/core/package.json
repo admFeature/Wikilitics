@@ -17,6 +17,7 @@
     "@app/connectors-hatvp": "workspace:*",
     "@app/connectors-poligraph": "workspace:*",
     "@app/connectors-senat": "workspace:*",
+    "@app/connectors-viepublique": "workspace:*",
     "@app/db": "workspace:*",
     "@app/reconciliation": "workspace:*",
     "@app/schema": "workspace:*"

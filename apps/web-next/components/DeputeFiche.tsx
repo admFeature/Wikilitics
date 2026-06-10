@@ -1,15 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchDepute, fetchVotes } from "@/lib/api";
+import { fetchDepute, fetchVotes, fetchDiscours } from "@/lib/api";
 import { ErrorBox } from "@/components/ErrorBox";
 import { PositionBadge } from "@/components/PositionBadge";
 import { ProvenanceLink } from "@/components/ProvenanceLink";
 
-/** Fiche d'une personnalité : en-tête (identité) + section « Derniers votes ». */
+/** Fiche d'une personnalité : identité + votes + discours. */
 export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }) {
   const depute = useQuery({ queryKey: ["depute", uid], queryFn: () => fetchDepute(uid) });
   const votes = useQuery({ queryKey: ["votes", uid], queryFn: () => fetchVotes(uid, 8) });
+  const discours = useQuery({ queryKey: ["discours", uid], queryFn: () => fetchDiscours(uid, 6) });
 
   return (
     <article className="fiche">
@@ -114,6 +115,26 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
           ))}
         </ul>
       </section>
+
+      {discours.data && discours.data.length > 0 && (
+        <section className="discours" aria-labelledby="disc-title">
+          <h3 className="section-title" id="disc-title">
+            Discours récents <span className="count">{discours.data.length}</span>
+          </h3>
+          <ul className="disc-list">
+            {discours.data.map((d) => (
+              <li key={d.url} className="disc-item">
+                <a href={d.url} target="_blank" rel="noopener noreferrer" className="disc-link">
+                  {d.titre}
+                </a>
+                <span className="disc-meta">
+                  {d.date ?? ""} · <ProvenanceLink provenance={d.provenance} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </article>
   );
 }

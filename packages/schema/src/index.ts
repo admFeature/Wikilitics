@@ -131,7 +131,20 @@ export const LegifranceTextSchema = z.object({
 });
 export type LegifranceText = z.infer<typeof LegifranceTextSchema>;
 
+/* ------------------------------------------------------------------ */
+/* Discours (vie-publique.fr)                                          */
+/* ------------------------------------------------------------------ */
+
+export const DiscoursItemSchema = z.object({
+  titre: z.string(),
+  date: z.string().optional(),
+  url: z.string().url(),
+  provenance: ProvenanceSchema,
+});
+export type DiscoursItem = z.infer<typeof DiscoursItemSchema>;
+
 /** Réponses listes — pratiques pour la validation côté frontend. */
 export const SearchHitListSchema = z.array(SearchHitSchema);
+export const DiscoursItemListSchema = z.array(DiscoursItemSchema);
 export const DeputeVoteListSchema = z.array(DeputeVoteSchema);
 export const LegifranceTextListSchema = z.array(LegifranceTextSchema);

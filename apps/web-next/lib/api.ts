@@ -6,11 +6,13 @@ import {
   AboutSchema,
   DeputeDetailSchema,
   DeputeVoteListSchema,
+  DiscoursItemListSchema,
   LegifranceTextListSchema,
   SearchHitListSchema,
   type About,
   type DeputeDetail,
   type DeputeVote,
+  type DiscoursItem,
   type LegifranceText,
   type SearchHit,
 } from "@app/schema";
@@ -54,6 +56,12 @@ export async function fetchDepute(uid: string): Promise<DeputeDetail> {
 export async function fetchVotes(uid: string, limit = 8): Promise<DeputeVote[]> {
   return DeputeVoteListSchema.parse(
     await getJson(`/api/deputes/${encodeURIComponent(uid)}/votes?limit=${limit}`),
+  );
+}
+
+export async function fetchDiscours(uid: string, limit = 6): Promise<DiscoursItem[]> {
+  return DiscoursItemListSchema.parse(
+    await getJson(`/api/deputes/${encodeURIComponent(uid)}/discours?limit=${limit}`),
   );
 }
 
