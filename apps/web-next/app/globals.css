@@ -114,14 +114,27 @@ button { cursor: pointer; font: inherit; color: inherit; }
 .app {
   max-width: 760px;
   margin: 0 auto;
-  padding: clamp(2rem, 6vw, 4.5rem) 1.25rem 5rem;
+  padding: clamp(1.5rem, 4vw, 2.75rem) 1.25rem 4rem;
 }
 /* Fiche ouverte : on élargit pour répartir les sections en colonnes. */
 .app--wide { max-width: 1080px; }
 /* La barre de recherche reste à une largeur de lecture confortable. */
 .app--wide .combobox { max-width: 680px; }
 
-.app__top { margin-bottom: 1.75rem; }
+.app__top { margin-bottom: 1.5rem; }
+
+/* En-tête compact (fiche ouverte) */
+.app__bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem;
+}
+.wordmark { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.95rem; }
+.wordmark__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* Provenance discrète (lien source ; licence/date en infobulle) */
+.src { color: var(--muted); font-size: 0.75rem; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.src:hover { color: var(--accent); }
+.src span { margin-left: 1px; }
 
 /* --- Mise en colonnes de la fiche ------------------------------------ */
 .fiche__cols { display: grid; gap: 1.5rem; }
@@ -346,20 +359,25 @@ h1 {
 .decl-link:hover { border-color: var(--accent-ring); }
 .decl-link:active { transform: scale(0.98); }
 .decl-note { margin: 0.6rem 0 0; font-size: 0.82rem; }
-.interets { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; gap: 0.9rem; }
+.interets { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; gap: 1.1rem; }
 .rubrique__label {
-  margin: 0 0 0.4rem; font-size: 0.74rem; font-weight: 600;
+  margin: 0 0 0.45rem; font-size: 0.72rem; font-weight: 600;
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
 }
-.rubrique__items { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.rubrique__item {
-  display: flex; flex-direction: column; gap: 0.1rem;
-  padding: 0.6rem 0.8rem;
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+/* Items d'une rubrique : une carte, lignes séparées par un hairline. */
+.rubrique__items {
+  list-style: none; padding: 0; margin: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-1); overflow: hidden;
 }
-.ri-titre { font-weight: 550; }
-.ri-detail { font-size: 0.9rem; }
-.ri-meta { color: var(--muted); font-size: 0.8rem; }
+.rubrique__item {
+  display: flex; flex-direction: column; gap: 0.05rem;
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+}
+.rubrique__item:last-child { border-bottom: 0; }
+.ri-titre { font-weight: 550; font-size: 0.92rem; }
+.ri-detail { font-size: 0.86rem; color: var(--ink); }
+.ri-meta { color: var(--muted); font-size: 0.78rem; }
 
 .section-title {
   display: flex; align-items: baseline; gap: 0.5rem;
@@ -371,18 +389,21 @@ h1 {
 }
 
 /* Votes */
-.votes { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.vote {
-  display: flex; gap: 0.85rem; align-items: flex-start;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.85rem 1rem;
-  box-shadow: var(--shadow-1);
+/* Liste de votes : une seule carte, lignes séparées par un hairline. */
+.votes {
+  list-style: none; padding: 0; margin: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-1); overflow: hidden;
 }
+.vote {
+  display: flex; gap: 0.8rem; align-items: flex-start;
+  padding: 0.8rem 0.95rem;
+  border-bottom: 1px solid var(--border);
+}
+.vote:last-child { border-bottom: 0; }
 .vote__body { flex: 1; min-width: 0; }
-.vote__titre { margin: 0 0 0.25rem; font-weight: 550; line-height: 1.4; }
-.vote__meta { margin: 0 0 0.45rem; color: var(--muted); font-size: 0.85rem; }
+.vote__titre { margin: 0 0 0.2rem; font-weight: 550; line-height: 1.4; font-size: 0.95rem; }
+.vote__meta { margin: 0; color: var(--muted); font-size: 0.82rem; display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
 
 /* Pastilles de position (conventions de l'hémicycle) */
 .badge {
@@ -423,17 +444,21 @@ h1 {
   border-radius: 8px; padding: 0.55rem; margin: 0.45rem 0 0;
 }
 
-/* Discours */
+/* Discours : une carte, lignes séparées par un hairline. */
 .discours { margin-top: 1.75rem; }
-.disc-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.disc-list {
+  list-style: none; padding: 0; margin: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-1); overflow: hidden;
+}
 .disc-item {
   display: flex; flex-direction: column; gap: 0.2rem;
-  padding: 0.7rem 0.85rem;
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--border);
 }
-.disc-link { color: var(--accent); text-decoration: none; font-weight: 550; line-height: 1.4; }
+.disc-item:last-child { border-bottom: 0; }
+.disc-link { color: var(--accent); text-decoration: none; font-weight: 550; line-height: 1.4; font-size: 0.93rem; }
 .disc-link:hover { text-decoration: underline; }
-.disc-meta { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: 0.8rem; }
+.disc-meta { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: 0.78rem; }
 
 /* Recherche Légifrance */
 .lf { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }

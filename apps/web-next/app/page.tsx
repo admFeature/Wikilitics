@@ -11,15 +11,25 @@ export default function Page() {
 
   return (
     <div className={`app${selected ? " app--wide" : ""}`}>
-      <header className="app__top">
-        <span className="eyebrow">Données publiques · sourcées</span>
-        <h1>Agrégateur de données politiques</h1>
-        <p className="lede">
-          Recherchez une personnalité, consultez ses faits publics, chacun
-          rattaché à sa source officielle. Aucune opinion, aucun score.
-        </p>
-        <ModeBanner />
-      </header>
+      {selected ? (
+        // Fiche ouverte : en-tête COMPACT (gain de place vertical).
+        <header className="app__bar">
+          <span className="wordmark">
+            <span className="wordmark__dot" aria-hidden /> Données politiques
+          </span>
+          <ModeBanner />
+        </header>
+      ) : (
+        <header className="app__top">
+          <span className="eyebrow">Données publiques · sourcées</span>
+          <h1>Agrégateur de données politiques</h1>
+          <p className="lede">
+            Recherchez une personnalité, consultez ses faits publics, chacun
+            rattaché à sa source officielle. Aucune opinion, aucun score.
+          </p>
+          <ModeBanner />
+        </header>
+      )}
 
       <main>
         <SearchBox onSelect={setSelected} />

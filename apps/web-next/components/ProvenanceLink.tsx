@@ -1,18 +1,23 @@
 import type { Provenance } from "@app/schema";
 
-/** Lien sortant vers la source officielle + licence + date de collecte. */
+/**
+ * Provenance DISCRÈTE : un petit lien vers la source ; licence + date de
+ * collecte en infobulle (traçabilité conservée, sans bruit visuel).
+ */
 export function ProvenanceLink({ provenance }: { provenance: Provenance }) {
   const collected = formatDate(provenance.collectedAt);
+  const title = `${provenance.licence}${collected ? ` · collecté le ${collected}` : ""}`;
   return (
-    <span className="provenance">
-      <a href={provenance.sourceUrl} target="_blank" rel="noopener noreferrer">
-        Source : {provenance.source}
-      </a>
-      <span className="provenance__meta">
-        {provenance.licence}
-        {collected ? ` · collecté le ${collected}` : ""}
-      </span>
-    </span>
+    <a
+      className="src"
+      href={provenance.sourceUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={title}
+    >
+      {provenance.source}
+      <span aria-hidden>↗</span>
+    </a>
   );
 }
 

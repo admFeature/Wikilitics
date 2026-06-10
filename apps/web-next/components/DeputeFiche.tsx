@@ -97,8 +97,9 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
                 <p className="vote__meta">
                   {v.scrutin.date ?? "date inconnue"}
                   {v.scrutin.resultat ? ` · ${v.scrutin.resultat}` : ""}
+                  {" · "}
+                  <ProvenanceLink provenance={v.provenance} />
                 </p>
-                <ProvenanceLink provenance={v.provenance} />
               </div>
             </li>
           ))}
