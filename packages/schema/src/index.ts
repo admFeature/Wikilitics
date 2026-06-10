@@ -33,6 +33,7 @@ export const SourceSchema = z.enum([
   "SENAT",
   "HATVP",
   "VIE_PUBLIQUE",
+  "GOUVERNEMENT",
 ]);
 export type Source = z.infer<typeof SourceSchema>;
 
@@ -63,6 +64,13 @@ export type DeputeSummary = z.infer<typeof DeputeSummarySchema>;
 
 export const DeputeDetailSchema = DeputeSummarySchema.extend({
   profession: z.string().optional(),
+  /** Enrichissements open data Assemblée (AMO) — tous optionnels. */
+  dateNaissance: z.string().optional(),
+  lieuNaissance: z.string().optional(),
+  membreGouvernement: z.boolean().optional(),
+  roleGouvernement: z.string().optional(),
+  /** Lien sortant vers la déclaration d'INTÉRÊTS HATVP (jamais le patrimoine). */
+  declarationInteretsUrl: z.string().url().optional(),
   provenance: ProvenanceSchema,
 });
 export type DeputeDetail = z.infer<typeof DeputeDetailSchema>;
@@ -109,6 +117,21 @@ export const AboutSchema = z.object({
 });
 export type About = z.infer<typeof AboutSchema>;
 
+/* ------------------------------------------------------------------ */
+/* Légifrance — textes de loi (recherche)                              */
+/* ------------------------------------------------------------------ */
+
+export const LegifranceTextSchema = z.object({
+  id: z.string(),
+  titre: z.string(),
+  nature: z.string().optional(),
+  date: z.string().optional(),
+  etat: z.string().optional(),
+  url: z.string().url(),
+});
+export type LegifranceText = z.infer<typeof LegifranceTextSchema>;
+
 /** Réponses listes — pratiques pour la validation côté frontend. */
 export const SearchHitListSchema = z.array(SearchHitSchema);
 export const DeputeVoteListSchema = z.array(DeputeVoteSchema);
+export const LegifranceTextListSchema = z.array(LegifranceTextSchema);

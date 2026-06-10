@@ -56,8 +56,12 @@ pnpm dev          # Next.js (UI + API) sur http://localhost:3000
 │       ├── base/            # SourceConnector, Provenance, http robuste, helpers
 │       ├── civix/           # connecteur CIVIX (Assemblée) ; mapping isolé
 │       │   └── src/normalisation.ts   ← SEULE section NORMALISATION
-│       ├── poligraph/       # (P2) connecteur PoliGraph (Sénat/ministres), même interface
-│       └── assemblee/       # (P3) open data AN : parser + index votes nominatifs en mémoire
+│       ├── poligraph/       # (P2) placeholder (utilisé seulement en mode DÉMO)
+│       ├── assemblee/       # (P3) open data AN : votes nominatifs + détails acteurs (en mémoire)
+│       ├── gouvernement/    # (P3) composition du Gouvernement (ministres) — open data DILA
+│       ├── senat/           # (P3) sénateurs en exercice — open data data.senat.fr
+│       ├── hatvp/           # (P3) déclarations d'INTÉRÊTS (lien) — open data HATVP
+│       └── legifrance/      # (P3) recherche de textes de loi — API PISTE/DILA (OAuth2)
 ├── docker-compose.yml       # (P2) Postgres pour la persistance
 └── prompt-projet-vscode.md
 ```
@@ -170,6 +174,65 @@ données**. Préchargé au démarrage → premier affichage rapide.
 
 → Donc `pnpm dev` (mode live) montre déjà les **vrais votes** des députés. Profondeur
 réglable : `ASSEMBLEE_MAX_SCRUTINS=1000 pnpm dev`.
+
+### Détails députés (open data AMO)
+
+`AssembleeActeursIndex` charge le jeu **AMO10** (députés actifs) et enrichit chaque
+fiche : **profession**, **date/lieu de naissance**, et flag **« Membre du
+Gouvernement »** (mandat GOUVERNEMENT en cours). Jointure par `acteurRef` = uid CIVIX.
+
+### Gouvernement (ministres) — open data DILA
+
+`@app/connectors-gouvernement` charge le « Protocole du Gouvernement » (DILA, via
+data.gouv.fr), extrait le **gouvernement le plus récent** et expose ses
+**ministres** (même interface `SourceConnector`) : ils deviennent cherchables,
+avec leur **fonction exacte**, même les ministres **non-députés**. L'URL du
+dernier XML est résolue dynamiquement via l'API data.gouv (robuste aux
+remaniements). Réconciliation : un ministre aussi député est rapproché de sa
+fiche Assemblée.
+
+> ⚠️ Le protocole DILA exclut les **secrétaires d'État** (ministres au sens
+> strict uniquement). On pourra les ajouter via une source complémentaire.
+
+### Sénateurs — open data data.senat.fr
+
+`@app/connectors-senat` charge l'annuaire des **sénateurs en exercice** (API JSON
+du Sénat, ~348 sénateurs) : recherche + fiche (groupe, circonscription,
+profession). En mode live, la recherche agrège donc **députés (Assemblée) +
+ministres (Gouvernement) + sénateurs (Sénat)**.
+
+> Les **votes nominatifs du Sénat** relèvent d'un jeu de données distinct
+> (scrutins) et ne sont pas encore couverts (fiche sénateur sans votes).
+
+### HATVP — déclarations d'intérêts (lien)
+
+`@app/connectors-hatvp` charge la liste open data HATVP (`liste.csv`) et ajoute
+sur chaque fiche (député / sénateur / ministre) un **lien sortant** vers sa
+**déclaration d'intérêts** officielle, rapproché par nom + mandat.
+
+> 🔒 **Conformité (non négociable, testée)** : on ne retient QUE les déclarations
+> d'**intérêts/activités** (`type_document` commençant par `di`). La **situation
+> patrimoniale** (`dsp*`) est **totalement exclue** de l'ingestion et de
+> l'affichage (republication interdite, sanction pénale). On n'expose qu'un lien
+> vers la page officielle HATVP, jamais le contenu patrimonial.
+
+### Légifrance — recherche de textes (API PISTE/DILA, OAuth2)
+
+`@app/connectors-legifrance` recherche des **textes de loi** (fonds LODA) via
+l'API Légifrance sur **PISTE** (OAuth2 client_credentials, token mis en cache).
+Une section **« Textes de loi · Légifrance »** sur la page d'accueil permet de
+chercher une loi/décret et d'ouvrir le texte officiel sur `legifrance.gouv.fr`.
+
+Identifiants (à mettre dans `.env` en local **et** dans les **variables
+d'environnement Vercel** en prod — jamais committés) :
+```
+LEGIFRANCE_CLIENT_ID=...
+LEGIFRANCE_CLIENT_SECRET=...
+```
+Prérequis : une **application PISTE abonnée à l'API Légifrance en Production**.
+Sans identifiants, la recherche renvoie un état désactivé (503) sans casser
+le reste de l'app. Décisions de justice = anonymisées → non rattachées à une
+personne (on n'expose qu'une recherche de **textes**, pas de personnes).
 
 ### À quoi sert Supabase alors ? (OPTIONNEL)
 

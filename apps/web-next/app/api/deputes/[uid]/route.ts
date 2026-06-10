@@ -3,6 +3,8 @@ import { getRegistry } from "@app/core";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// 1er appel : peut charger l'index acteurs (open data AMO) → marge de temps.
+export const maxDuration = 60;
 
 export async function GET(_req: Request, { params }: { params: { uid: string } }) {
   const uid = decodeURIComponent(params.uid);

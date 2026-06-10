@@ -30,15 +30,44 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
           <h2 className="fiche__name">{depute.data.prenom} {depute.data.nom}</h2>
           <div className="fiche__meta">
             <span className="chip">{depute.data.groupe ?? depute.data.groupeAbbr ?? "Groupe non renseigné"}</span>
+            {depute.data.membreGouvernement && (
+              <span className="chip chip--accent">
+                {depute.data.roleGouvernement ?? "Membre du Gouvernement"}
+              </span>
+            )}
             {depute.data.circonscription && (
               <span className="chip chip--muted">{depute.data.circonscription}</span>
             )}
             {depute.data.profession && (
               <span className="chip chip--muted">{depute.data.profession}</span>
             )}
+            {depute.data.dateNaissance && (
+              <span className="chip chip--muted">
+                Naissance&nbsp;: {depute.data.dateNaissance}
+                {depute.data.lieuNaissance ? ` à ${depute.data.lieuNaissance}` : ""}
+              </span>
+            )}
           </div>
           <ProvenanceLink provenance={depute.data.provenance} />
         </header>
+      )}
+
+      {depute.data?.declarationInteretsUrl && (
+        <section className="transparence" aria-labelledby="transp-title">
+          <h3 className="section-title" id="transp-title">Transparence</h3>
+          <a
+            className="decl-link"
+            href={depute.data.declarationInteretsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Déclaration d&apos;intérêts (HATVP) <span aria-hidden>↗</span>
+          </a>
+          <p className="muted decl-note">
+            Lien vers la déclaration officielle d&apos;intérêts. Conformément à la
+            loi, la situation patrimoniale n&apos;est jamais republiée.
+          </p>
+        </section>
       )}
 
       <section aria-labelledby="votes-title">
@@ -63,8 +92,9 @@ export function DeputeFiche({ uid, onBack }: { uid: string; onBack: () => void }
         {votes.isError && <ErrorBox error={votes.error} />}
         {votes.data && votes.data.length === 0 && (
           <p className="muted">
-            Aucun vote nominatif récent pour cette personne (membre du
-            Gouvernement, ou aucun vote sur la période couverte).
+            Aucun vote nominatif disponible pour cette personne via les sources
+            actuelles (députés : open data Assemblée ; sénateurs et ministres non
+            couverts pour les votes).
           </p>
         )}
 

@@ -8,3 +8,4 @@ export {
   type ParsedVote,
 } from "./an-scrutins.js";
 export { AssembleeVotesIndex } from "./votes-index.js";
+export { AssembleeActeursIndex, parseActeur, type ActeurDetail } from "./acteurs-index.js";

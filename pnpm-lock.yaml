@@ -48,6 +48,9 @@ importers:
 
   apps/web-next:
     dependencies:
+      '@app/connectors-legifrance':
+        specifier: workspace:*
+        version: link:../../packages/connectors/legifrance
       '@app/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -57,6 +60,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.59.0
         version: 5.101.0(react@18.3.1)
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       next:
         specifier: ^14.2.18
         version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -131,7 +137,70 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/connectors/gouvernement:
+    dependencies:
+      '@app/connectors-base':
+        specifier: workspace:*
+        version: link:../base
+      '@app/schema':
+        specifier: workspace:*
+        version: link:../../schema
+    devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.19.20
+      tsx:
+        specifier: ^4.19.2
+        version: 4.22.4
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/connectors/hatvp:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.19.20
+      tsx:
+        specifier: ^4.19.2
+        version: 4.22.4
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/connectors/legifrance:
+    dependencies:
+      '@app/schema':
+        specifier: workspace:*
+        version: link:../../schema
+    devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.19.20
+      tsx:
+        specifier: ^4.19.2
+        version: 4.22.4
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/connectors/poligraph:
+    dependencies:
+      '@app/connectors-base':
+        specifier: workspace:*
+        version: link:../base
+      '@app/schema':
+        specifier: workspace:*
+        version: link:../../schema
+    devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.19.20
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/connectors/senat:
     dependencies:
       '@app/connectors-base':
         specifier: workspace:*
@@ -158,9 +227,18 @@ importers:
       '@app/connectors-civix':
         specifier: workspace:*
         version: link:../connectors/civix
+      '@app/connectors-gouvernement':
+        specifier: workspace:*
+        version: link:../connectors/gouvernement
+      '@app/connectors-hatvp':
+        specifier: workspace:*
+        version: link:../connectors/hatvp
       '@app/connectors-poligraph':
         specifier: workspace:*
         version: link:../connectors/poligraph
+      '@app/connectors-senat':
+        specifier: workspace:*
+        version: link:../connectors/senat
       '@app/db':
         specifier: workspace:*
         version: link:../db

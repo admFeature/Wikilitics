@@ -13,7 +13,10 @@
     "@app/connectors-assemblee": "workspace:*",
     "@app/connectors-base": "workspace:*",
     "@app/connectors-civix": "workspace:*",
+    "@app/connectors-gouvernement": "workspace:*",
+    "@app/connectors-hatvp": "workspace:*",
     "@app/connectors-poligraph": "workspace:*",
+    "@app/connectors-senat": "workspace:*",
     "@app/db": "workspace:*",
     "@app/reconciliation": "workspace:*",
     "@app/schema": "workspace:*"

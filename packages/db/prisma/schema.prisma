@@ -29,6 +29,7 @@ enum Source {
   SENAT
   HATVP
   VIE_PUBLIQUE
+  GOUVERNEMENT
 }
 
 enum VotePosition {

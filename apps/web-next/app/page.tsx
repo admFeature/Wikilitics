@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ModeBanner } from "@/components/ModeBanner";
 import { DeputeFiche } from "@/components/DeputeFiche";
 import { SearchBox } from "@/components/SearchBox";
+import { LegifranceSearch } from "@/components/LegifranceSearch";
 
 export default function Page() {
   const [selected, setSelected] = useState<string | null>(null);
@@ -26,10 +27,13 @@ export default function Page() {
         {selected ? (
           <DeputeFiche uid={selected} onBack={() => setSelected(null)} />
         ) : (
-          <p className="hint">
-            Commencez à taper un nom : les suggestions apparaissent au fil de la
-            frappe. Astuce : <kbd className="kbd">⌘K</kbd> pour aller à la recherche.
-          </p>
+          <>
+            <p className="hint">
+              Commencez à taper un nom : les suggestions apparaissent au fil de la
+              frappe. Astuce : <kbd className="kbd">⌘K</kbd> pour aller à la recherche.
+            </p>
+            <LegifranceSearch />
+          </>
         )}
       </main>
 

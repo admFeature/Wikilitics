@@ -14,7 +14,10 @@ import type { SourceConnector } from "@app/connectors-base";
 import type { DeputeDetail, DeputeVote, SearchHit, Source } from "@app/schema";
 import { createCivixConnector } from "@app/connectors-civix";
 import { createPoliGraphConnector } from "@app/connectors-poligraph";
-import { AssembleeVotesIndex } from "@app/connectors-assemblee";
+import { createGouvernementConnector } from "@app/connectors-gouvernement";
+import { createSenatConnector } from "@app/connectors-senat";
+import { AssembleeVotesIndex, AssembleeActeursIndex } from "@app/connectors-assemblee";
+import { HatvpInteretsIndex, type HatvpMandat } from "@app/connectors-hatvp";
 import { reconcile, type IdentityCandidate } from "@app/reconciliation";
 // IMPORTANT : @app/db (et donc @prisma/client) n'est JAMAIS importé
 // statiquement. Sans DATABASE_URL, la persistance est désactivée et Prisma
@@ -34,6 +37,13 @@ function sourceLabel(source: Source): string {
   if (source === "POLIGRAPH") return "PoliGraph (Sénat/ministres)";
   return source;
 }
+
+/** Correspondance source interne → type de mandat HATVP. */
+const HATVP_MANDAT: Partial<Record<Source, HatvpMandat>> = {
+  CIVIX: "depute",
+  SENAT: "senateur",
+  GOUVERNEMENT: "gouvernement",
+};
 
 const SEP = ":";
 export function encodeUid(source: Source, uid: string): string {
@@ -55,20 +65,36 @@ export class ConnectorRegistry {
   private repoPromise: Promise<Repository> | null = null;
   /** Votes nominatifs Assemblée en mémoire (open data) — utilisés en mode live. */
   private readonly assemblee = new AssembleeVotesIndex();
+  /** Détails acteurs Assemblée (profession, naissance, gouvernement). */
+  private readonly acteurs = new AssembleeActeursIndex();
+  /** Déclarations d'INTÉRÊTS HATVP (lien sortant ; jamais le patrimoine). */
+  private readonly hatvp = new HatvpInteretsIndex();
 
   constructor() {
-    const candidates = [createCivixConnector(), createPoliGraphConnector()];
+    const baseCandidates = [createCivixConnector(), createPoliGraphConnector()];
     // On ne MÉLANGE JAMAIS des sources réelles (live) avec des sources de démo.
-    this.liveMode = candidates.some((c) => c.isLive);
-    const kept = this.liveMode ? candidates.filter((c) => c.isLive) : candidates;
+    this.liveMode = baseCandidates.some((c) => c.isLive);
+    const kept = this.liveMode
+      ? // En live : sources réelles (Assemblée) + Gouvernement (ministres) + Sénat.
+        [
+          ...baseCandidates.filter((c) => c.isLive),
+          createGouvernementConnector(),
+          createSenatConnector(),
+        ]
+      : baseCandidates;
     this.connectors = new Map<Source, SourceConnector>(kept.map((c) => [c.source, c]));
     this.dbEnabled =
       typeof process.env.DATABASE_URL === "string" && process.env.DATABASE_URL.trim() !== "";
   }
 
-  /** Préchauffe l'index des votes Assemblée (à appeler au démarrage si live). */
+  /** Préchauffe les index Assemblée (votes + acteurs) si en mode live. */
   async warmAssemblee(): Promise<void> {
-    if (this.liveMode) await this.assemblee.load().catch(() => undefined);
+    if (!this.liveMode) return;
+    await Promise.all([
+      this.assemblee.load().catch(() => undefined),
+      this.acteurs.load().catch(() => undefined),
+      this.hatvp.load().catch(() => undefined),
+    ]);
   }
 
   get persistenceEnabled(): boolean {
@@ -161,7 +187,7 @@ export class ConnectorRegistry {
     });
   }
 
-  /** Détail routé vers le bon connecteur (uid préfixé par la source). */
+  /** Détail routé vers le bon connecteur, enrichi par l'open data Assemblée. */
   async getDepute(prefixedUid: string): Promise<DeputeDetail | null> {
     const decoded = decodeUid(prefixedUid);
     if (!decoded) return null;
@@ -169,7 +195,40 @@ export class ConnectorRegistry {
     if (!connector) return null;
     const detail = await connector.getDepute(decoded.uid);
     if (!detail) return null;
-    return { ...detail, uid: prefixedUid };
+
+    let enriched: DeputeDetail = { ...detail, uid: prefixedUid };
+    // Enrichissement AMO (profession, naissance, gouvernement) par acteurRef = uid CIVIX.
+    if (this.liveMode) {
+      try {
+        await this.acteurs.load();
+        const x = this.acteurs.getDetail(decoded.uid);
+        if (x) {
+          enriched = {
+            ...enriched,
+            ...(x.profession && !enriched.profession ? { profession: x.profession } : {}),
+            ...(x.dateNaissance ? { dateNaissance: x.dateNaissance } : {}),
+            ...(x.lieuNaissance ? { lieuNaissance: x.lieuNaissance } : {}),
+            ...(x.membreGouvernement ? { membreGouvernement: true } : {}),
+            ...(x.roleGouvernement ? { roleGouvernement: x.roleGouvernement } : {}),
+          };
+        }
+      } catch {
+        /* index acteurs indisponible : on renvoie le détail de base */
+      }
+
+      // Lien déclaration d'INTÉRÊTS HATVP (jamais le patrimoine).
+      const mandat = HATVP_MANDAT[decoded.source];
+      if (mandat) {
+        try {
+          await this.hatvp.load();
+          const url = this.hatvp.getInteretsUrl(enriched.prenom, enriched.nom, mandat);
+          if (url) enriched = { ...enriched, declarationInteretsUrl: url };
+        } catch {
+          /* index HATVP indisponible : on ignore */
+        }
+      }
+    }
+    return enriched;
   }
 
   /** Votes : mémoire (Assemblée open data) → base (si ETL) → connecteur. */

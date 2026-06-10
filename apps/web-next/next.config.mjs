@@ -1,3 +1,11 @@
+import { config } from "dotenv";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+// Charge le .env de la RACINE du monorepo (dev/local) : LEGIFRANCE_CLIENT_ID, etc.
+// En prod (Vercel), les variables viennent du dashboard → ce chargement est ignoré.
+config({ path: join(dirname(fileURLToPath(import.meta.url)), "..", "..", ".env") });
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -8,6 +16,10 @@ const nextConfig = {
     "@app/connectors-base",
     "@app/connectors-civix",
     "@app/connectors-poligraph",
+    "@app/connectors-gouvernement",
+    "@app/connectors-senat",
+    "@app/connectors-hatvp",
+    "@app/connectors-legifrance",
     "@app/connectors-assemblee",
     "@app/reconciliation",
     "@app/db",
